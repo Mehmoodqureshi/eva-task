@@ -28,14 +28,16 @@ export const AssistantChat = ({
   const [loading, setLoading] = useState(false);
 
   const sendMessage = async (msg) => {
-    if (msg.toLowerCase().includes("get contact")) {
-      const emailMatch = msg.match(/get contact\s+(.+)/i);
-      const email = emailMatch?.[1]?.trim();
+    if (
+      msg.toLowerCase().includes("contact") &&
+      /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(msg)
+    ) {
+      const emailMatch = msg.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+      const email = emailMatch?.[0]?.trim();
 
       if (!email) {
         return "❗ Please provide a valid email. Example: get contact john@example.com";
       }
-
       try {
         const res = await fetch("/api/hubspot/contact", {
           method: "POST",
