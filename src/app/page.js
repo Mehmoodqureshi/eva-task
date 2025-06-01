@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { FaBars } from "react-icons/fa";
+import { FaBars, FaPlus } from "react-icons/fa";
 import { AssistantChat } from "@/features/assistant/AssistantChat";
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [chats, setChats] = useState([
-    { id: 1, title: "AssistantChat: Today's Chat", messages: [] },
+    { id: 1, title: "New Chat", messages: [] },
   ]);
   const [selectedChat, setSelectedChat] = useState(chats[0].id);
 
@@ -18,11 +18,30 @@ export default function Home() {
   const addNewChat = () => {
     const newChat = {
       id: Date.now(),
-      title: `AssistantChat: New Chat ${chats.length + 1}`,
+      title: "New Chat",
       messages: [],
     };
     setChats([newChat, ...chats]);
     setSelectedChat(newChat.id);
+  };
+
+  const deleteChat = (chatId) => {
+    if (chats.length <= 1) return;
+
+    const updatedChats = chats.filter((chat) => chat.id !== chatId);
+    setChats(updatedChats);
+
+    if (selectedChat === chatId) {
+      setSelectedChat(updatedChats[0].id);
+    }
+  };
+
+  const renameChat = (chatId, newTitle) => {
+    setChats(
+      chats.map((chat) =>
+        chat.id === chatId ? { ...chat, title: newTitle } : chat
+      )
+    );
   };
 
   const updateChatMessages = (chatId, newMessage) => {
@@ -32,8 +51,8 @@ export default function Home() {
           // If first message, update title to snippet
           const updatedTitle =
             chat.messages.length === 0
-              ? newMessage.content.slice(0, 30) +
-                (newMessage.content.length > 30 ? "..." : "")
+              ? newMessage.text.slice(0, 40) +
+                (newMessage.text.length > 40 ? "..." : "")
               : chat.title;
 
           return {
@@ -48,7 +67,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-700">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -56,53 +75,49 @@ export default function Home() {
         selectedChat={selectedChat}
         setSelectedChat={setSelectedChat}
         addNewChat={addNewChat}
+        deleteChat={deleteChat}
+        renameChat={renameChat}
       />
-
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black opacity-50 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       <div
-        className={`flex-1 bg-slate-900 text-white transition-all duration-300 ease-in-out h-screen ${
-          sidebarOpen ? "ml-72" : "ml-0"
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "ml-64" : "ml-0"
         }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-400 ">
-          <div className="flex items-center">
+        {/* Header - ChatGPT Style */}
+        <div className="flex items-center justify-between h-14 px-4 border-b border-gray-500 bg-gray-900">
+          <div className="flex items-center gap-4">
+            {/* Hamburger Menu - Always Visible */}
+            <button
+              className="text-gray-300 p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              onClick={toggleSidebar}
+              aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+            >
+              <FaBars size={16} />
+            </button>
+
+            {/* New Chat Button - Show when sidebar is closed */}
             {!sidebarOpen && (
               <button
-                className="text-white p-2 hover:bg-gray-700/50 rounded-lg transition-all duration-200 hover:scale-105 mr-4"
-                onClick={toggleSidebar}
-                aria-label="Open sidebar"
+                onClick={addNewChat}
+                className="flex items-center  gap-2 px-3 py-1.5 text-sm border border-gray-400 rounded-lg hover:bg-gray-700 transition-colors"
               >
-                <FaBars size={18} />
+                <FaPlus size={12} />
+                New chat
               </button>
             )}
-            <h1 className="text-lg font-medium text-gray-100">
-              Your Assistant
-            </h1>
+
+            <h1 className="text-lg font-semibold">Your Assistant</h1>
           </div>
-          <div className="text-sm text-gray-400">version 1</div>
         </div>
 
-        <div
-          className={`transition-all border-yellow-200 duration-300 ease-in-out transform ${
-            sidebarOpen ? "scale-100 opacity-100" : "scale-[1.02] opacity-100"
-          }`}
-        >
-          <div className="">
-            <AssistantChat
-              key={selectedChat}
-              chatId={selectedChat}
-              messages={
-                chats.find((c) => c.id === selectedChat)?.messages || []
-              }
-              onSendMessage={(msg) => updateChatMessages(selectedChat, msg)}
-            />
-          </div>
+        {/* Chat Area */}
+        <div className="flex-1 relative overflow-hidden">
+          <AssistantChat
+            key={selectedChat}
+            chatId={selectedChat}
+            messages={chats.find((c) => c.id === selectedChat)?.messages || []}
+            onSendMessage={(msg) => updateChatMessages(selectedChat, msg)}
+          />
         </div>
       </div>
     </div>

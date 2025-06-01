@@ -1,10 +1,30 @@
 import React, { useState } from "react";
 import ChatUI from "@/components/ChatUI";
 
-export const AssistantChat = () => {
-  const [messages, setMessages] = useState([
-    { id: "1", text: "Hello! How can I assist you?", sender: "assistant" },
-  ]);
+export const AssistantChat = ({
+  chatId,
+  messages: externalMessages,
+  onSendMessage,
+}) => {
+  const [internalMessages, setInternalMessages] = useState([]);
+
+  const messages = externalMessages || internalMessages;
+  const setMessages = onSendMessage
+    ? (newMessages) => {
+        if (typeof newMessages === "function") {
+          const currentMessages = externalMessages || internalMessages;
+          const updatedMessages = newMessages(currentMessages);
+          const newMessage = updatedMessages[updatedMessages.length - 1];
+          if (
+            newMessage &&
+            !currentMessages.find((msg) => msg.id === newMessage.id)
+          ) {
+            onSendMessage(newMessage);
+          }
+        }
+      }
+    : setInternalMessages;
+
   const [loading, setLoading] = useState(false);
 
   const sendMessage = async (msg) => {
@@ -35,7 +55,7 @@ export const AssistantChat = () => {
         }
       } catch (err) {
         console.error("❌ Error fetching contact:", err);
-        return "⚠️ Failed to get contact information.";
+        return "⚠ Failed to get contact information.";
       }
     }
 
@@ -65,7 +85,7 @@ export const AssistantChat = () => {
         }
       } catch (err) {
         console.error("❌ Error creating deal:", err);
-        return "⚠️ Something went wrong while creating the deal.";
+        return "⚠ Something went wrong while creating the deal.";
       }
     }
 
@@ -77,7 +97,7 @@ export const AssistantChat = () => {
       const phone = match?.[2]?.trim();
 
       if (!email || !phone) {
-        return "❗ Please provide both email and phone number. Example: update contact phone number for abc@email.com to +923001234567";
+        return "❗ Please provide both email and phone number. Example: update contact phone number for abc@email.com to ‪+923001234567‬";
       }
 
       try {
@@ -93,7 +113,7 @@ export const AssistantChat = () => {
           : `❌ Failed: ${data.error || "Could not update phone"}`;
       } catch (err) {
         console.error("Update phone error:", err);
-        return "⚠️ Error updating contact phone number.";
+        return "⚠ Error updating contact phone number.";
       }
     }
 
@@ -119,7 +139,7 @@ export const AssistantChat = () => {
           : `❌ Failed: ${data.error || "Could not update email"}`;
       } catch (err) {
         console.error("Update email error:", err);
-        return "⚠️ Error updating contact email.";
+        return "⚠ Error updating contact email.";
       }
     }
 
@@ -137,7 +157,7 @@ export const AssistantChat = () => {
       return data.reply || "🤖 No response from assistant.";
     } catch (err) {
       console.error("❌ Error communicating with Gemini:", err);
-      return "⚠️ Failed to get response from assistant.";
+      return "⚠ Failed to get response from assistant.";
     }
   };
 
@@ -146,6 +166,7 @@ export const AssistantChat = () => {
       id: Date.now().toString(),
       text: msg,
       sender: "user",
+      timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -158,8 +179,9 @@ export const AssistantChat = () => {
         id: (Date.now() + 1).toString(),
         text: assistantReply,
         sender: "assistant",
+        timestamp: new Date(),
       };
-      console.log("Msg from the bot is");
+
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.error("Error fetching assistant response:", err);
@@ -169,18 +191,11 @@ export const AssistantChat = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gradient-to-b from-[#343541] to-[#2a2b38] text-sm scrollbar-hide">
-      {/* Chat Messages Container */}
-      <div className="flex-1 scrollbar-hide">
-        <div className="transition-all duration-300 ease-in-out">
-          <ChatUI
-            messages={messages}
-            onSend={handleSend}
-            loading={loading}
-            className=""
-          />
-        </div>
-      </div>
-    </div>
+    <ChatUI
+      messages={messages}
+      onSend={handleSend}
+      loading={loading}
+      className="h-full"
+    />
   );
 };
