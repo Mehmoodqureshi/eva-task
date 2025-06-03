@@ -88,7 +88,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             {/* Hamburger Menu - Always Visible */}
             <button
-              className="text-gray-300 p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="text-gray-300 p-2 hover:bg-gray-700 rounded-lg transition-colors duration-200"
               onClick={toggleSidebar}
               aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
